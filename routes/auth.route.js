@@ -1,22 +1,19 @@
 
 import express from 'express';
-import { signup } from '../controllers/auth.controller.js';
-import express from 'express';
-import { googleAuth, googleCallback, googleRedirect, githubAuth, githubCallback, githubRedirect, logout } from '../controllers/auth.controller.js';
+import { login , signup ,getUserByToken, getAvatars, getAvatarById, setAvatar, setupProfile} from '../controllers/auth.controller.js';
+import { verifyToken } from '../middleware/auth.middleware.js'; // Adjust the path as necessary
+
+
 
 const router = express.Router();
 
+router.post('/login', login);
 router.post('/signup', signup);
+router.get('/user', verifyToken, getUserByToken);
+router.post('/setup-profile',verifyToken, setupProfile);
 
-// Google Authentication Routes
-router.get('/auth/google', googleAuth);
-router.get('/auth/google/callback', googleCallback, googleRedirect);
-
-// GitHub Authentication Routes
-router.get('/auth/github', githubAuth);
-router.get('/auth/github/callback', githubCallback, githubRedirect);
-
-// Logout Route
-router.get('/auth/logout', logout);
+router.get('/avatars', getAvatars);
+router.get('/avatar/:id', getAvatarById);
+router.put('/avatar',verifyToken, setAvatar);
 
 export default router;

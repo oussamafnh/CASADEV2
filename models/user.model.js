@@ -1,21 +1,19 @@
 import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema({
-    username: { type: String, required: true, unique: true },
+    username: { type: String, unique: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     firstName: { type: String },
     lastName: { type: String },
-    profilePicture: { type: String },
+    avatar: { type: String },
     coverPicture: { type: String },
-    about: { type: String },
+    bio: { type: String },
+    birthday: { type: Date }, // Add the birthday field here
     lastLogin: { type: Date, default: Date.now },
     isVerified: { type: Boolean, default: false },
-    resetPasswordToken: { type: String },
-    resetPasswordExpiresAt:  { type: Date},
-    verificationToken: { type: String },
-    verificationTokenExpiresAt:  { type: Date},
-},{timestamps:true});
+    Token: { type: String },
+}, { timestamps: true });
 
 const User = mongoose.model('User', userSchema);
 

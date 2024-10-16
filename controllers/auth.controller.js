@@ -1,58 +1,61 @@
-// import User from "../models/user.model.js";
-// import bcryptjs from "bcryptjs";
-// import { generateTokenAndSetCookie } from "../utils/generateTokenAndSetCookie.js";
+
+import User from "../models/user.model.js";
+import Avatar from '../models/avatar.model.js';
+import bcryptjs from "bcryptjs";
+import jwt from "jsonwebtoken";
+import crypto from "crypto"; // Import crypto for generating verification token
 
 // export const signup = async (req, res) => {
-//     const { username, email, password } = req.body;
+//     const { username, email, password, confirmPassword } = req.body;
+    
 //     try {
-//         if (!username || !email || !password ) {
-//             throw new Error ("all field are required");
+//         // Check if all required fields are provided
+//         if (!username || !email || !password || !confirmPassword) {
+//             throw new Error("All fields are required");
 //         }
+
+//         // Check if the password matches confirmPassword
+//         if (password !== confirmPassword) {
+//             return res.status(400).json({ error: "Passwords do not match" });
+//         }
+
+//         // Check if the user already exists
 //         const userAlreadyExists = await User.findOne({ email });
 //         if (userAlreadyExists) {
 //             return res.status(400).json({ error: "User already exists" });
 //         }
 
-//         const hashedPassword =await bcryptjs.hash(password,10)
+//         // Hash the password
+//         const hashedPassword = await bcryptjs.hash(password, 10);
+
 //         const user = new User({
 //             username,
 //             email,
 //             password: hashedPassword,
-//             verificationToken: verificationToken,
-//             verificationTokenExpiresAt :Date.now() +24*60*60*1000 //24hrs
 //         });
 
+//         // Save the user
 //         await user.save();
 
-
-//         generateTokenAndSetCookie(res, user._id)
-
-//         res.status(200).json({ 
+//         // Respond with success message (excluding the password)
+//         res.status(200).json({
 //             message: "User registered successfully",
-//             user: {...user._doc, password: undefined}
+//             user: { ...user._doc, password: undefined }
 //         });
-
 
 //     } catch (error) {
 //         res.status(500).json({ error: error.message });
 //     }
-// }
+// };
 
 
-
-
-
-import User from "../models/user.model.js";
-import bcryptjs from "bcryptjs";
-import crypto from "crypto"; // Import crypto for generating verification token
-import { generateTokenAndSetCookie } from "../utils/generateTokenAndSetCookie.js";
 
 export const signup = async (req, res) => {
-    const { username, email, password, confirmPassword } = req.body;
-    
+    const { email, password, confirmPassword } = req.body;
+
     try {
         // Check if all required fields are provided
-        if (!username || !email || !password || !confirmPassword) {
+        if (!email || !password || !confirmPassword) {
             throw new Error("All fields are required");
         }
 
@@ -70,27 +73,31 @@ export const signup = async (req, res) => {
         // Hash the password
         const hashedPassword = await bcryptjs.hash(password, 10);
 
-        // Generate a verification token
-        const verificationToken = crypto.randomBytes(32).toString('hex'); // 32 bytes for token
-
-        // Create the user
         const user = new User({
-            username,
             email,
             password: hashedPassword,
-            verificationToken, // Assign the generated token
-            verificationTokenExpiresAt: Date.now() + 24 * 60 * 60 * 1000, // Token valid for 24 hours
         });
 
         // Save the user
         await user.save();
 
-        // Generate token and set cookie
-        generateTokenAndSetCookie(res, user._id);
+        // Log in the user directly after signup
+        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" }); // Use your JWT secret
 
-        // Respond with success message (excluding the password)
+        // Store the token in the user document
+        user.Token = token;
+        await user.save();
+
+        // Set the token in a cookie
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production", // Set to true in production
+            path: '/',
+        });
+
+        // Respond with success and user information (excluding password)
         res.status(200).json({
-            message: "User registered successfully",
+            message: "User registered and logged in successfully",
             user: { ...user._doc, password: undefined }
         });
 
@@ -99,42 +106,141 @@ export const signup = async (req, res) => {
     }
 };
 
+export const login = async (req, res) => {
+    const { email, password } = req.body;
 
-// authController.js
-import passport from 'passport';
+    try {
+        // Check if the user exists
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(400).json({ error: "User does not exist" });
+        }
 
-// Google Auth
-export const googleAuth = passport.authenticate('google', {
-  scope: ['profile', 'email']
-});
+        // Compare the provided password with the hashed password in the database
+        const isPasswordValid = await bcryptjs.compare(password, user.password);
+        if (!isPasswordValid) {
+            return res.status(400).json({ error: "Invalid password" });
+        }
 
-// Google Callback
-export const googleCallback = passport.authenticate('google', { failureRedirect: '/login' });
+        // Generate a token
+        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" }); // Use your JWT secret
 
-export const googleRedirect = (req, res) => {
-  // Here, you can send back the user info or a success message
-  res.status(200).json({ message: 'Successfully authenticated with Google', user: req.user });
-};
+        // Store the token in the user document
+        user.Token = token;
+        await user.save();
 
-// GitHub Auth
-export const githubAuth = passport.authenticate('github', {
-  scope: ['user:email']
-});
+        // Set the token in a cookie
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production", // Set to true in production
+            path: '/',
+        });
 
-// GitHub Callback
-export const githubCallback = passport.authenticate('github', { failureRedirect: '/login' });
-
-export const githubRedirect = (req, res) => {
-  // Here, you can send back the user info or a success message
-  res.status(200).json({ message: 'Successfully authenticated with GitHub', user: req.user });
-};
-
-// Logout
-export const logout = (req, res) => {
-  req.logout((err) => {
-    if (err) {
-      return res.status(500).json({ message: 'Error logging out' });
+        // Respond with success and user information (excluding password)
+        res.status(200).json({
+            message: "Login successful",
+            user: { ...user._doc, password: undefined }
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
-    res.status(200).json({ message: 'Logged out successfully' });
-  });
+};
+
+
+export const getUserByToken = async (req, res) => {
+  try {
+      // The user is already attached to the request object by the verifyToken middleware
+      const user = req.user;
+
+      // Respond with the user information (excluding the password)
+      res.status(200).json({
+          user: { ...user._doc, password: undefined }
+      });
+  } catch (error) {
+      res.status(500).json({ error: error.message });
+  }
+};
+
+
+
+
+export const getAvatars = async (req, res) => {
+  try {
+    const avatars = await Avatar.find(); // Fetch all avatars
+    res.status(200).json(avatars);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+export const getAvatarById = async (req, res) => {
+    const { id } = req.params; // Extract the avatar ID from the request parameters
+    try {
+        const avatar = await Avatar.findById(id); // Find the avatar by ID
+        if (!avatar) {
+            return res.status(404).json({ error: "Avatar not found" });
+        }
+        res.status(200).json(avatar); // Send back the avatar if found
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+export const setAvatar = async (req, res) => {
+    const userId = req.user._id; // Assuming you are using some authentication to get the user ID
+    const { avatarId } = req.body; // The ID of the chosen avatar
+
+    try {
+        // Validate if avatarId exists
+        const avatar = await Avatar.findById(avatarId);
+        if (!avatar) {
+            return res.status(404).json({ error: "Avatar not found" });
+        }
+
+        // Update the user's avatar
+        const user = await User.findByIdAndUpdate(userId, { avatar: avatarId }, { new: true });
+
+        res.status(200).json({ message: "Avatar updated successfully", user });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+
+
+
+export const setupProfile = async (req, res) => {
+    const { avatar ,firstName, lastName, username, bio, birthday } = req.body;
+
+    try {
+        const user = await User.findById(req.user._id); // Assuming the user is authenticated and their ID is available
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Update the user profile fields
+        user.avatar = avatar;
+        user.firstName = firstName;
+        user.lastName = lastName;
+        user.username = username;
+        
+        // Set bio only if provided
+        if (bio) {
+            user.bio = bio;
+        }
+        
+        user.birthday = birthday;
+
+        // Set isVerified to true
+        user.isVerified = true;
+
+        await user.save();
+
+        res.status(200).json({
+            message: "Profile setup successfully",
+            user: { ...user._doc, password: undefined }
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 };
