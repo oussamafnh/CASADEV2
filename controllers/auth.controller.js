@@ -3,51 +3,6 @@ import User from "../models/user.model.js";
 import Avatar from '../models/avatar.model.js';
 import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
-import crypto from "crypto"; // Import crypto for generating verification token
-
-// export const signup = async (req, res) => {
-//     const { username, email, password, confirmPassword } = req.body;
-    
-//     try {
-//         // Check if all required fields are provided
-//         if (!username || !email || !password || !confirmPassword) {
-//             throw new Error("All fields are required");
-//         }
-
-//         // Check if the password matches confirmPassword
-//         if (password !== confirmPassword) {
-//             return res.status(400).json({ error: "Passwords do not match" });
-//         }
-
-//         // Check if the user already exists
-//         const userAlreadyExists = await User.findOne({ email });
-//         if (userAlreadyExists) {
-//             return res.status(400).json({ error: "User already exists" });
-//         }
-
-//         // Hash the password
-//         const hashedPassword = await bcryptjs.hash(password, 10);
-
-//         const user = new User({
-//             username,
-//             email,
-//             password: hashedPassword,
-//         });
-
-//         // Save the user
-//         await user.save();
-
-//         // Respond with success message (excluding the password)
-//         res.status(200).json({
-//             message: "User registered successfully",
-//             user: { ...user._doc, password: undefined }
-//         });
-
-//     } catch (error) {
-//         res.status(500).json({ error: error.message });
-//     }
-// };
-
 
 
 export const signup = async (req, res) => {
@@ -146,31 +101,52 @@ export const login = async (req, res) => {
     }
 };
 
+export const logout = async (req, res) => {
+    try {
+        // The user is already attached to the request object by the verifyToken middleware
+        const user = req.user;
+
+        // Respond with the user information (excluding the password)
+        user.Token = null;
+        await user.save();
+
+        // Clear the token cookie from the client
+        res.cookie("token", "", {
+            httpOnly: true,
+            expires: new Date(0) // Set the cookie to expire immediately
+        });
+        res.status(200).json({ message: "Logout successful" });
+
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
 
 export const getUserByToken = async (req, res) => {
-  try {
-      // The user is already attached to the request object by the verifyToken middleware
-      const user = req.user;
+    try {
+        // The user is already attached to the request object by the verifyToken middleware
+        const user = req.user;
 
-      // Respond with the user information (excluding the password)
-      res.status(200).json({
-          user: { ...user._doc, password: undefined }
-      });
-  } catch (error) {
-      res.status(500).json({ error: error.message });
-  }
+        // Respond with the user information (excluding the password)
+        res.status(200).json({
+            user: { ...user._doc, password: undefined }
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 };
 
 
 
 
 export const getAvatars = async (req, res) => {
-  try {
-    const avatars = await Avatar.find(); // Fetch all avatars
-    res.status(200).json(avatars);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+    try {
+        const avatars = await Avatar.find(); // Fetch all avatars
+        res.status(200).json(avatars);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 };
 export const getAvatarById = async (req, res) => {
     const { id } = req.params; // Extract the avatar ID from the request parameters
@@ -209,7 +185,7 @@ export const setAvatar = async (req, res) => {
 
 
 export const setupProfile = async (req, res) => {
-    const { avatar ,firstName, lastName, username, bio, birthday } = req.body;
+    const { avatar, firstName, lastName, username, bio, birthday } = req.body;
 
     try {
         const user = await User.findById(req.user._id); // Assuming the user is authenticated and their ID is available
@@ -223,12 +199,12 @@ export const setupProfile = async (req, res) => {
         user.firstName = firstName;
         user.lastName = lastName;
         user.username = username;
-        
+
         // Set bio only if provided
         if (bio) {
             user.bio = bio;
         }
-        
+
         user.birthday = birthday;
 
         // Set isVerified to true

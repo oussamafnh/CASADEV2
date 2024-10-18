@@ -16,5 +16,6 @@ const userSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 const User = mongoose.model('User', userSchema);
+// export const getUserById = async (id) => await User.findById(id);
 
 export default User;

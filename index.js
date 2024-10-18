@@ -3,6 +3,7 @@ import dotenv from  "dotenv";
 import cookieParser from 'cookie-parser';
 import { connectDB } from "./db/connectDB.js";
 import authRoutes from  "./routes/auth.route.js";
+import PostRoutes from  "./routes/post.route.js";
 import cors from 'cors';
 
 const app = express();
@@ -14,6 +15,7 @@ app.use(express.json());
 const PORT = process.env.PORT ;
 
 app.use("/api/auth", authRoutes) 
+app.use("/api/post", PostRoutes) 
 
 
 app.listen(PORT, () => {
