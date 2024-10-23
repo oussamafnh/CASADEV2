@@ -19,7 +19,7 @@ router.get('/:postId/likes', getPostLikes);
 router.get('/mostliked',verifyLike, getMostLikedPosts);
 
 
-router.get('/:id',verifyToken,verifyLike, getPostById);
+router.get('/:id',verifyLike, getPostById);
 router.put('/:id/edit', verifyToken, checkIsAuthor, editPost);
 
 export default router;
