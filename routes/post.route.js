@@ -16,10 +16,10 @@ router.delete('/:postId/unlike', verifyToken, unlikePost);
 router.get('/:postId/likes', getPostLikes);
 
 
-router.get('/mostliked', getMostLikedPosts);
+router.get('/mostliked',verifyLike, getMostLikedPosts);
 
 
-router.get('/:id', getPostById);
+router.get('/:id',verifyToken,verifyLike, getPostById);
 router.put('/:id/edit', verifyToken, checkIsAuthor, editPost);
 
 export default router;

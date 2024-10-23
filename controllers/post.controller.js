@@ -223,9 +223,12 @@ export const getPostsByUser = async (req, res) => {
 };
 
 
+
 export const getMostLikedPosts = async (req, res) => {
   try {
     const { page = 1, limit = 10 } = req.query; // Pagination variables (defaults: page 1, 10 posts per page)
+    const user = req.user;
+    let isAllowed = false;
 
     // Step 1: Aggregate posts with their like counts
     const posts = await Post.aggregate([
@@ -258,17 +261,46 @@ export const getMostLikedPosts = async (req, res) => {
       {
         // Step 5: Exclude the 'likes' array from the result (optional)
         $project: {
-          likes: 0,
+          likes: 0, // Exclude the 'likes' array
         },
       },
     ]);
 
-    // Step 6: Return the paginated posts
+    // Step 6: If the user is not logged in (no token), return the posts with isLiked set to false by default
+    if (!user) {
+      isAllowed = false;
+      const postsWithIsLiked = posts.map(post => ({
+        ...post,
+        isLiked: false // Default to false when user is not logged in
+      }));
+
+      return res.status(200).json({ isAllowed, posts: postsWithIsLiked });
+    }
+
+    // Step 7: If the user is logged in, check if they've liked the posts
+    const userId = user._id;
+    isAllowed = true;
+
+    const postsWithIsLiked = await Promise.all(
+      posts.map(async (post) => {
+        let isLiked = false;
+
+        // Check if the user has liked the post
+        const like = await Like.findOne({ postId: post._id, userId });
+        if (like) {
+          isLiked = true; // Set isLiked to true if the like is found
+        }
+
+        return { ...post, isLiked }; // Add isLiked to the post object
+      })
+    );
+
+    // Step 8: Return the paginated posts, including the isLiked field
     res.status(200).json({
-      message: 'Posts retrieved successfully',
+      isAllowed,
+      posts: postsWithIsLiked,
       page: parseInt(page),
       limit: parseInt(limit),
-      posts,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -291,16 +323,30 @@ export const getPostById = async (req, res) => {
     // Fetch the like count for the post
     const likeCount = await Like.countDocuments({ postId: id });
 
+    // Determine if the user is logged in (isAllowed) and if they liked the post (isLiked)
+    const user = req.user;
+    let isAllowed = false;
+    let isLiked = false;
 
-    // Respond with the post and like count
+    if (user) {
+      isAllowed = true;
+      // Check if the user has liked the post
+      const like = await Like.findOne({ postId: id, userId: user._id });
+      isLiked = !!like; // Set isLiked to true if a like is found
+    }
+
+    // Respond with the post, like count, isAllowed, and isLiked fields
     res.status(200).json({
       post,
-      likeCount
+      likeCount,
+      isAllowed,
+      isLiked,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
+
 
 
 export const editPost = async (req, res) => {
