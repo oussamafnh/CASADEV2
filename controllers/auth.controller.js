@@ -1,6 +1,7 @@
 
 import User from "../models/user.model.js";
 import Avatar from '../models/avatar.model.js';
+import Post from "../models/post.model.js";
 import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
 
@@ -215,6 +216,42 @@ export const setupProfile = async (req, res) => {
         res.status(200).json({
             message: "Profile setup successfully",
             user: { ...user._doc, password: undefined }
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+export const getUserById = async (req, res) => {
+    const { id } = req.params; // Extract the user ID from the request parameters
+
+    try {
+        const currentuser = req.user;
+        let isAllowed = false;
+        if (currentuser) {
+            isAllowed = true;
+        }
+        const user = await User.findById(id); // Find the user by ID
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        // Count the total number of posts by this user
+        const postCount = await Post.countDocuments({ authorId: id });
+
+        // Respond with user information, excluding sensitive fields
+        res.status(200).json({
+            _id: user._id,
+            isAllowed,
+            email: user.email,
+            avatar: user.avatar,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            username: user.username,
+            bio: user.bio,
+            birthday: user.birthday,
+            isVerified: user.isVerified,
+            totalPosts: postCount
         });
     } catch (error) {
         res.status(500).json({ error: error.message });
