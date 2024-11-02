@@ -129,10 +129,24 @@ export const getUserByToken = async (req, res) => {
         // The user is already attached to the request object by the verifyToken middleware
         const user = req.user;
 
-        // Respond with the user information (excluding the password)
+        const postCount = await Post.countDocuments({ authorId: user._id });
+
         res.status(200).json({
-            user: { ...user._doc, password: undefined }
+            user: {
+                _id: user._id,
+                email: user.email,
+                avatar: user.avatar,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                username: user.username,
+                bio: user.bio,
+                birthday: user.birthday,
+                isVerified: user.isVerified,
+                totalPosts: postCount,
+                password: undefined
+            }
         });
+
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

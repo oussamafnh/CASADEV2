@@ -1,5 +1,5 @@
 import express from 'express';
-import {getPostCountByUser, createPost , getAllPostsPaginated,getMyPosts, getLatestPostsPaginated , getPostsByUser ,getMostLikedPosts , getPostById , editPost } from '../controllers/post.controller.js';
+import {getPostCountByUser, createPost , getAllPostsPaginated,getMyPosts, getLatestPostsPaginated , getPostsByUser ,getMostLikedPosts , getPostById , editPost ,toggleSave , getSavedPosts} from '../controllers/post.controller.js';
 import { likePost, unlikePost, getPostLikes } from '../controllers/like.controller.js';
 import { verifyToken, verifyLike , checkIsAuthor } from '../middleware/auth.middleware.js'; // Adjust the path as necessary
 
@@ -26,5 +26,8 @@ router.get('/mostliked',verifyLike, getMostLikedPosts);
 
 router.get('/:id',verifyLike, getPostById);
 router.put('/:id/edit', verifyToken, checkIsAuthor, editPost);
+
+
+
 
 export default router;
