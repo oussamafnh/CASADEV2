@@ -246,7 +246,7 @@ export const getPostsByUser = async (req, res) => {
     ]);
 
     if (posts.length === 0) {
-      return res.status(404).json({ message: 'No posts found for this user' });
+      return res.status(200).json([]);
     }
 
     const currentUser = req.user; // Get the logged-in user from middleware
@@ -448,18 +448,27 @@ export const getPostById = async (req, res) => {
 
 export const editPost = async (req, res) => {
   try {
-    const { title, subtitle, content, image, video } = req.body;
-    const post = req.post; // Retrieved from the middleware
+    const { title, content, image } = req.body;
+    const postId = req.params.id; // Get the post ID from the URL parameters
+    const userId = req.user._id; // Get the current logged-in user's ID
 
-    // Update the post fields
+    // Fetch the post directly in the controller
+    const post = await Post.findById(postId);
+
+    // Check if the post exists
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+
+    // Check if the current user is the author of the post
+    if (post.authorId.toString() !== userId.toString()) {
+      return res.status(403).json({ message: 'You are not authorized to edit this post' });
+    }
+
+    // Update the post fields if provided
     if (title) post.title = title;
-    if (subtitle) post.subtitle = subtitle;
     if (content) post.content = content;
     if (image) post.image = image;
-    if (video) post.video = video;
-
-    // Mark the post as edited
-    post.isEdited = true;
 
     // Save the updated post to the database
     await post.save();
@@ -473,7 +482,6 @@ export const editPost = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
 
 
 export const getPostCountByUser = async (req, res) => {
@@ -582,5 +590,38 @@ export const getSavedPosts = async (req, res) => {
     res.status(200).json(posts);
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+};
+
+
+export const deletePost = async (req, res) => {
+  try {
+      const { postId } = req.params;
+      const userId = req.user._id;
+
+      // Find the post by ID
+      const post = await Post.findById(postId);
+
+      // Check if the post exists
+      if (!post) {
+          return res.status(404).json({ message: "Post not found" });
+      }
+
+      // Verify if the current user is the author of the post
+      if (post.authorId.toString() !== userId.toString()) {
+          return res.status(403).json({ message: "Unauthorized to delete this post" });
+      }
+
+      // Delete the post
+      await Post.findByIdAndDelete(postId);
+
+      // Delete associated comments, likes, and saves
+      await Comment.deleteMany({ postId });
+      await Like.deleteMany({ postId });
+      await Save.deleteMany({ postId });
+
+      res.status(200).json({ message: "Post and related data successfully deleted" });
+  } catch (error) {
+      res.status(500).json({ error: error.message });
   }
 };

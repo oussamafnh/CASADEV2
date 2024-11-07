@@ -34,13 +34,25 @@ export const addComment = async (req, res) => {
 export const getCommentsByPost = async (req, res) => {
     try {
         const { postId } = req.params;
+        const userId = req.user ? req.user._id : null;
+
+        // Fetch comments for the given post ID, sorted by creation date
         const comments = await Comment.find({ postId }).sort({ createdAt: -1 });
 
-        res.status(200).json(comments);
+
+        // Map through comments to add the `isMe` field
+        const commentsWithIsMe = comments.map((comment) => {
+            const isMe = userId ? comment.userId.toString() === userId.toString() : false;
+            return { ...comment._doc, isMe };
+        });
+
+        res.status(200).json(commentsWithIsMe);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
+
+
 
 
 export const editComment = async (req, res) => {

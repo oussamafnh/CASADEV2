@@ -6,6 +6,7 @@ import authRoutes from  "./routes/auth.route.js";
 import PostRoutes from  "./routes/post.route.js";
 import commentRoutes from "./routes/comment.route.js"
 import saveRoutes from "./routes/save.route.js"
+import SearchRoutes from "./routes/search.route.js"
 import cors from 'cors';
 
 const app = express();
@@ -18,6 +19,7 @@ const PORT = process.env.PORT ;
 
 app.use("/api/auth", authRoutes) 
 app.use("/api/post", PostRoutes) 
+app.use("/api/search", SearchRoutes) 
 app.use("/api/comment", commentRoutes)
 app.use("/api/save", saveRoutes)
 
