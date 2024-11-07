@@ -2,8 +2,12 @@ import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
 import Post from '../models/post.model.js';
 
+
+
+
+// Middleware to verify JWT token
 export const verifyToken = async (req, res, next) => {
-  const token = req.cookies.token; // Get the token from cookies
+  const token = req.cookies.token;
 
   if (!token) {
     return res.status(401).json({ error: "No token provided" });
@@ -17,19 +21,24 @@ export const verifyToken = async (req, res, next) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    req.user = user; // Attach user to the request object
-    next(); // Proceed to the next middleware/controller
+    req.user = user;
+    next();
   } catch (error) {
     res.status(401).json({ error: "Invalid token" });
   }
 };
 
+
+
+
+
+
 export const verifyLike = async (req, res, next) => {
-  const token = req.cookies.token; // Get the token from cookies
+  const token = req.cookies.token;
 
   if (!token) {
     req.user = null;
-    return next(); // Proceed to the next middleware/controller
+    return next();
   }
   else {
     try {
@@ -40,8 +49,8 @@ export const verifyLike = async (req, res, next) => {
         return res.status(404).json({ error: "User not found" });
       }
 
-      req.user = user; // Attach user to the request object
-      next(); // Proceed to the next middleware/controller
+      req.user = user;
+      next();
     } catch (error) {
       res.status(401).json({ error: "Invalid token" });
     }
@@ -56,21 +65,18 @@ export const verifyLike = async (req, res, next) => {
 export const checkIsAuthor = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const userId = req.user._id; // Assuming the user ID is available after authentication
+    const userId = req.user._id;
 
-    // Find the post by its ID
     const post = await Post.findById(id);
 
     if (!post) {
       return res.status(404).json({ message: 'Post not found' });
     }
 
-    // Check if the authenticated user is the author of the post
     if (post.authorId.toString() !== userId.toString()) {
       return res.status(403).json({ message: 'You are not authorized to edit this post' });
     }
 
-    // Pass the post to the next middleware or route handler
     req.post = post;
     next();
   } catch (error) {

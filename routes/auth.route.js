@@ -1,7 +1,7 @@
 
 import express from 'express';
 import { login , signup , logout ,getUserByToken, getUserById, getAvatars, getAvatarById, setAvatar, setupProfile} from '../controllers/auth.controller.js';
-import { verifyToken ,verifyLike } from '../middleware/auth.middleware.js'; // Adjust the path as necessary
+import { verifyToken ,verifyLike } from '../middleware/auth.middleware.js';
 
 
 

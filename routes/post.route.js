@@ -1,7 +1,7 @@
 import express from 'express';
 import {getPostCountByUser, createPost , getAllPostsPaginated,getMyPosts, getLatestPostsPaginated , getPostsByUser ,getMostLikedPosts , getPostById , editPost ,deletePost} from '../controllers/post.controller.js';
 import { likePost, unlikePost, getPostLikes } from '../controllers/like.controller.js';
-import { verifyToken, verifyLike , checkIsAuthor } from '../middleware/auth.middleware.js'; // Adjust the path as necessary
+import { verifyToken, verifyLike , checkIsAuthor } from '../middleware/auth.middleware.js';
 
 
 const router = express.Router();

@@ -1,6 +1,9 @@
 import Post from '../models/post.model.js';
 import User from "../models/user.model.js";
 
+
+
+// Search controller
 export const search = async (req, res) => {
     try {
         const query = req.query.query;
@@ -8,7 +11,7 @@ export const search = async (req, res) => {
         let users = [];
         let posts = [];
 
-        // If query has 1 character, search for names/usernames and post titles that start with it
+        // query has 1 character
         if (query.length === 1) {
             users = await User.find({
                 $or: [
@@ -22,7 +25,7 @@ export const search = async (req, res) => {
                 title: { $regex: `^${query}`, $options: "i" }
             });
         } 
-        // If query has 3 or more characters, search for matches within names/usernames and post titles
+        // query has 3 or more characters
         else if (query.length >= 3) {
             users = await User.find({
                 $or: [
@@ -36,7 +39,7 @@ export const search = async (req, res) => {
                 title: { $regex: query, $options: "i" }
             });
         }
-        // If query contains multiple words, search for each word in users and posts (title and content)
+        // query has multiple words
         else if (query.split(" ").length > 1) {
             const words = query.split(" ").join("|");
 
@@ -56,7 +59,6 @@ export const search = async (req, res) => {
             });
         }
 
-        // Add the counts to the response
         res.status(200).json({
             usersResults: users.length,
             users,

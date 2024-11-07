@@ -9,13 +9,13 @@ const userSchema = new mongoose.Schema({
     avatar: { type: String },
     coverPicture: { type: String },
     bio: { type: String },
-    birthday: { type: Date }, // Add the birthday field here
+    birthday: { type: Date },
     lastLogin: { type: Date, default: Date.now },
     isVerified: { type: Boolean, default: false },
     Token: { type: String },
 }, { timestamps: true });
 
 const User = mongoose.model('User', userSchema);
-// export const getUserById = async (id) => await User.findById(id);
+
 
 export default User;

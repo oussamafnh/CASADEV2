@@ -11,8 +11,8 @@ import cors from 'cors';
 
 const app = express();
 dotenv.config();
-// app.use(cors());
-app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
+// app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
+app.use(cors({ origin: 'http://127.0.0.1:5173', credentials: true }));
 app.use(cookieParser());
 app.use(express.json());
 const PORT = process.env.PORT ;
@@ -30,4 +30,3 @@ app.listen(PORT, () => {
 });
 
 //dbcshAn7gU3RkSa5
-

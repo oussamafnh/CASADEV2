@@ -4,43 +4,49 @@ import Like from '../models/like.model.js';
 import Comment from '../models/comment.model.js';
 import Save from '../models/save.model.js';
 
+
+
+
+// Create a new post
 export const createPost = async (req, res) => {
   try {
 
     const user = req.user;
     const { title, content, image, video } = req.body;
 
-    // Validation: Ensure that the required fields are present
     if (!title || !content) {
       return res.status(400).json({ error: "All required fields must be provided" });
     }
 
-    // Create a new post object
     const newPost = new Post({
       title: title,
       content: content,
-      image: image || null,  // Optional field, so it defaults to null if not provided
-      video: video || null,  // Optional field, so it defaults to null if not provided
-      author: user.username, // Extracted from the authenticated user
-      authorAvatar: user.avatar, // Extracted from the authenticated user
+      image: image || null,
+      video: video || null,
+      author: user.username,
+      authorAvatar: user.avatar,
       authorId: user._id
     });
 
-    // Save the new post to the database
     await newPost.save();
 
-    // Respond with success and return the newly created post
+
     res.status(201).json({
       message: "Post created successfully",
       post: newPost
     });
   } catch (error) {
-    // Catch any errors and respond with a 500 status code
     res.status(500).json({ error: error.message });
   }
 };
 
 
+
+
+
+
+
+// Get all posts
 export const getAllPostsPaginated = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -48,7 +54,6 @@ export const getAllPostsPaginated = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const posts = await Post.aggregate([
-      // Lookup likes to count them
       {
         $lookup: {
           from: 'likes',
@@ -62,7 +67,6 @@ export const getAllPostsPaginated = async (req, res) => {
           likeCount: { $size: '$likes' },
         },
       },
-      // Lookup comments to count them
       {
         $lookup: {
           from: 'comments',
@@ -80,35 +84,30 @@ export const getAllPostsPaginated = async (req, res) => {
       { $limit: limit },
       {
         $project: {
-          likes: 0, // Exclude likes array
-          comments: 0, // Exclude comments array
+          likes: 0,
+          comments: 0,
         },
       },
     ]);
 
-    const currentUser = req.user; // Get the logged-in user from middleware
+    const currentUser = req.user;
     let isAllowed = false;
-
-    // If user is not logged in, return posts without isLiked and isMe fields
     if (!currentUser) {
       return res.status(200).json({ isAllowed, posts });
     }
-
-    // User is logged in, include isLiked, isMe, and isSaved fields
     const currentUserId = currentUser._id.toString();
     isAllowed = true;
 
     const postsWithLikeIsMeAndSaved = await Promise.all(
       posts.map(async (post) => {
-        const isLiked = !!(await Like.findOne({ postId: post._id, userId: currentUserId })); // Check if the current user liked the post
-        const isMe = post.authorId === currentUserId; // Check if the current user is the author
-        const isSaved = !!(await Save.findOne({ postId: post._id, userId: currentUserId })); // Check if the current user saved the post
+        const isLiked = !!(await Like.findOne({ postId: post._id, userId: currentUserId }));
+        const isMe = post.authorId === currentUserId;
+        const isSaved = !!(await Save.findOne({ postId: post._id, userId: currentUserId }));
 
-        return { ...post, isLiked, isMe, isSaved }; // Combine post data with isLiked, isMe, and isSaved fields
+        return { ...post, isLiked, isMe, isSaved };
       })
     );
 
-    // Respond with the list of posts, including like counts, comment counts, isLiked, isMe, and isSaved fields
     res.status(200).json({ isAllowed, posts: postsWithLikeIsMeAndSaved });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -116,6 +115,11 @@ export const getAllPostsPaginated = async (req, res) => {
 };
 
 
+
+
+
+
+// Get latest posts
 export const getLatestPostsPaginated = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -123,7 +127,6 @@ export const getLatestPostsPaginated = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const posts = await Post.aggregate([
-      // Lookup likes to count them
       {
         $lookup: {
           from: 'likes',
@@ -137,7 +140,6 @@ export const getLatestPostsPaginated = async (req, res) => {
           likeCount: { $size: '$likes' },
         },
       },
-      // Lookup comments to count them
       {
         $lookup: {
           from: 'comments',
@@ -158,8 +160,8 @@ export const getLatestPostsPaginated = async (req, res) => {
       { $limit: limit },
       {
         $project: {
-          likes: 0, // Exclude likes array
-          comments: 0, // Exclude comments array
+          likes: 0,
+          comments: 0,
         },
       },
     ]);
@@ -167,26 +169,21 @@ export const getLatestPostsPaginated = async (req, res) => {
     const user = req.user;
     let isAllowed = false;
 
-    // If user is not logged in, return posts without isLiked and isMe fields
     if (!user) {
       return res.status(200).json({ isAllowed, posts });
     }
-
-    // User is logged in, include isLiked and isMe fields
     const userId = user._id.toString();
     isAllowed = true;
 
     const postsWithLikeIsMeAndSaved = await Promise.all(
       posts.map(async (post) => {
-        const isLiked = !!(await Like.findOne({ postId: post._id, userId: userId })); // Check if the current user liked the post
-        const isMe = post.authorId.toString() === userId; // Check if the current user is the author
-        const isSaved = !!(await Save.findOne({ postId: post._id, userId: userId })); // Check if the current user saved the post
+        const isLiked = !!(await Like.findOne({ postId: post._id, userId: userId }));
+        const isMe = post.authorId.toString() === userId;
+        const isSaved = !!(await Save.findOne({ postId: post._id, userId: userId }));
 
-        return { ...post, isLiked, isMe, isSaved }; // Combine post data with isLiked, isMe, and isSaved fields
+        return { ...post, isLiked, isMe, isSaved };
       })
     );
-
-    // Respond with the list of posts, including like counts, comment counts, isLiked, isMe, and isSaved fields
     res.status(200).json({ isAllowed, posts: postsWithLikeIsMeAndSaved });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -195,19 +192,16 @@ export const getLatestPostsPaginated = async (req, res) => {
 
 
 
+
+
+
+// Get a posts posted by a user
 export const getPostsByUser = async (req, res) => {
   try {
-    const { userId } = req.params; // Get userId from the request parameters
-
-    // Aggregation pipeline to fetch posts by specified user ID, include like and comment counts, and sort by latest
+    const { userId } = req.params; 
     const posts = await Post.aggregate([
-      // Match posts with the specified user ID as the author
       { $match: { authorId: userId } },
-
-      // Sort by latest created posts first
       { $sort: { createdAt: -1 } },
-
-      // Lookup likes to count them
       {
         $lookup: {
           from: 'likes',
@@ -221,8 +215,6 @@ export const getPostsByUser = async (req, res) => {
           likeCount: { $size: '$likes' },
         },
       },
-
-      // Lookup comments to count them
       {
         $lookup: {
           from: 'comments',
@@ -239,8 +231,8 @@ export const getPostsByUser = async (req, res) => {
 
       {
         $project: {
-          likes: 0, // Exclude likes array
-          comments: 0, // Exclude comments array
+          likes: 0,
+          comments: 0,
         },
       },
     ]);
@@ -249,29 +241,26 @@ export const getPostsByUser = async (req, res) => {
       return res.status(200).json([]);
     }
 
-    const currentUser = req.user; // Get the logged-in user from middleware
+    const currentUser = req.user;
     let isAllowed = false;
 
-    // If user is not logged in, return posts without isLiked and isMe fields
     if (!currentUser) {
       return res.status(200).json({ isAllowed, posts });
     }
 
-    // User is logged in, include isLiked, isMe, and isSaved fields
     const currentUserId = currentUser._id.toString();
     isAllowed = true;
 
     const postsWithLikeIsMeAndSaved = await Promise.all(
       posts.map(async (post) => {
-        const isLiked = !!(await Like.findOne({ postId: post._id, userId: currentUserId })); // Check if the current user liked the post
-        const isMe = post.authorId.toString() === currentUserId; // Check if the current user is the author
-        const isSaved = !!(await Save.findOne({ postId: post._id, userId: currentUserId })); // Check if the current user saved the post
+        const isLiked = !!(await Like.findOne({ postId: post._id, userId: currentUserId }));
+        const isMe = post.authorId.toString() === currentUserId;
+        const isSaved = !!(await Save.findOne({ postId: post._id, userId: currentUserId }));
 
-        return { ...post, isLiked, isMe, isSaved }; // Combine post data with isLiked, isMe, and isSaved fields
+        return { ...post, isLiked, isMe, isSaved };
       })
     );
 
-    // Respond with the list of posts, including like counts, comment counts, isLiked, isMe, and isSaved fields
     res.status(200).json({ isAllowed, posts: postsWithLikeIsMeAndSaved });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -281,54 +270,17 @@ export const getPostsByUser = async (req, res) => {
 
 
 
-export const getMyPosts = async (req, res) => {
-  try {
-    const user = req.user;
-
-    if (!user) {
-      return res.status(401).json({ message: "Unauthorized. Please log in." });
-    }
-
-    // Fetch posts authored by the logged-in user
-    const posts = await Post.find({ authorId: user._id }).sort({ createdAt: -1 });
-
-    // Retrieve like counts and comment counts, and add `isMe` field for each post
-    const postsWithDetailsAndSaved = await Promise.all(
-      posts.map(async (post) => {
-        const likeCount = await Like.countDocuments({ postId: post._id });
-        const commentCount = await Comment.countDocuments({ postId: post._id }); // Count comments
-        const isSaved = !!(await Save.findOne({ postId: post._id, userId: user._id }));
-
-        return {
-          ...post._doc,
-          likeCount,
-          commentCount, // Include total comments
-          isMe: true,
-          isSaved
-        };
-      })
-    );
-
-    // Respond with the user's posts including like counts and comment counts
-    res.status(200).json(postsWithDetailsAndSaved);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
 
 
-
+// Get Most Liked Posts
 export const getMostLikedPosts = async (req, res) => {
   try {
     const { page = 1, limit = 10 } = req.query;
     const user = req.user;
     const userId = user ? user._id.toString() : null;
     let isAllowed = Boolean(user);
-
-    // Aggregate posts with like counts and comment counts
     const posts = await Post.aggregate([
       {
-        // Join with the Like collection to count likes
         $lookup: {
           from: 'likes',
           localField: '_id',
@@ -338,11 +290,10 @@ export const getMostLikedPosts = async (req, res) => {
       },
       {
         $addFields: {
-          likeCount: { $size: '$likes' }, // Count likes
+          likeCount: { $size: '$likes' },
         },
       },
       {
-        // Join with the Comment collection to count comments
         $lookup: {
           from: 'comments',
           localField: '_id',
@@ -352,11 +303,11 @@ export const getMostLikedPosts = async (req, res) => {
       },
       {
         $addFields: {
-          commentCount: { $size: '$comments' }, // Count comments
+          commentCount: { $size: '$comments' },
         },
       },
       {
-        $sort: { likeCount: -1 }, // Sort posts by like count
+        $sort: { likeCount: -1 },
       },
       {
         $skip: (page - 1) * parseInt(limit),
@@ -366,19 +317,19 @@ export const getMostLikedPosts = async (req, res) => {
       },
       {
         $project: {
-          likes: 0, // Exclude the likes array
-          comments: 0, // Exclude the comments array
+          likes: 0,
+          comments: 0,
         },
       },
     ]);
 
     const postsWithLikeIsMeAndSaved = await Promise.all(
       posts.map(async (post) => {
-        const isLiked = !!(await Like.findOne({ postId: post._id, userId: userId })); // Check if the current user liked the post
-        const isMe = post.authorId.toString() === userId; // Check if the current user is the author
-        const isSaved = !!(await Save.findOne({ postId: post._id, userId: userId })); // Check if the current user saved the post
+        const isLiked = !!(await Like.findOne({ postId: post._id, userId: userId }));
+        const isMe = post.authorId.toString() === userId;
+        const isSaved = !!(await Save.findOne({ postId: post._id, userId: userId }));
 
-        return { ...post, isLiked, isMe, isSaved }; // Combine post data with isLiked, isMe, and isSaved fields
+        return { ...post, isLiked, isMe, isSaved };
       })
     );
 
@@ -394,50 +345,83 @@ export const getMostLikedPosts = async (req, res) => {
 };
 
 
+
+
+
+
+
+// Get my posts (client posts)
+export const getMyPosts = async (req, res) => {
+  try {
+    const user = req.user;
+
+    if (!user) {
+      return res.status(401).json({ message: "Unauthorized. Please log in." });
+    }
+    const posts = await Post.find({ authorId: user._id }).sort({ createdAt: -1 });
+    const postsWithDetailsAndSaved = await Promise.all(
+      posts.map(async (post) => {
+        const likeCount = await Like.countDocuments({ postId: post._id });
+        const commentCount = await Comment.countDocuments({ postId: post._id });
+        const isSaved = !!(await Save.findOne({ postId: post._id, userId: user._id }));
+
+        return {
+          ...post._doc,
+          likeCount,
+          commentCount,
+          isMe: true,
+          isSaved
+        };
+      })
+    );
+
+    res.status(200).json(postsWithDetailsAndSaved);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
+
+
+
+
+
+
+// Get a post by ID
 export const getPostById = async (req, res) => {
   try {
     const { id } = req.params;
-
-    // Fetch the post by its ID
     const post = await Post.findById(id);
 
     if (!post) {
       return res.status(404).json({ message: 'Post not found' });
     }
-
-    // Fetch the like count for the post
     const likeCount = await Like.countDocuments({ postId: id });
 
-    // Determine if the user is logged in (isAllowed), if they liked the post (isLiked), and if they saved the post (isSaved)
     const user = req.user;
     let isAllowed = false;
     let isLiked = false;
-    let isMe = false; // Initialize isMe
-    let isSaved = false; // Initialize isSaved
+    let isMe = false;
+    let isSaved = false; 
 
     if (user) {
       isAllowed = true;
       const userId = user._id.toString();
 
-      // Check if the user has liked the post
       const like = await Like.findOne({ postId: id, userId });
-      isLiked = !!like; // Set isLiked to true if a like is found
-
-      // Check if the logged-in user is the author of the post
+      isLiked = !!like;
       isMe = post.authorId.toString() === userId;
-
-      // Check if the current user saved the post
-      isSaved = !!(await Save.findOne({ postId: post._id, userId: userId })); // Check if the current user saved the post
+      isSaved = !!(await Save.findOne({ postId: post._id, userId: userId }));
     }
 
-    // Respond with the post, like count, isAllowed, isLiked, isMe, and isSaved fields
     res.status(200).json({
       post,
       likeCount,
       isAllowed,
       isLiked,
       isMe,
-      isSaved // Include isSaved in the response
+      isSaved
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -446,37 +430,41 @@ export const getPostById = async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+// Edit a post
 export const editPost = async (req, res) => {
   try {
     const { title, content, image } = req.body;
-    const postId = req.params.id; // Get the post ID from the URL parameters
-    const userId = req.user._id; // Get the current logged-in user's ID
-
-    // Fetch the post directly in the controller
+    const postId = req.params.id;
+    const userId = req.user._id;
     const post = await Post.findById(postId);
-
-    // Check if the post exists
     if (!post) {
       return res.status(404).json({ message: 'Post not found' });
     }
 
-    // Check if the current user is the author of the post
     if (post.authorId.toString() !== userId.toString()) {
       return res.status(403).json({ message: 'You are not authorized to edit this post' });
     }
 
-    // Update the post fields if provided
     if (title) post.title = title;
     if (content) post.content = content;
-    if (image) post.image = image;
+    if (image === null) {
+      post.image = null;
+    } else if (image) {
+      post.image = image;
+    }
 
-    // Save the updated post to the database
     await post.save();
 
-    // Respond with the updated post
     res.status(200).json({
       message: 'Post updated successfully',
-      post
+      post,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -484,11 +472,18 @@ export const editPost = async (req, res) => {
 };
 
 
+
+
+
+
+
+
+
+// Get Post Count By User (how much posts a user has posed)
 export const getPostCountByUser = async (req, res) => {
   try {
-    const userId = req.params.userId; // Assuming the user ID is passed as a URL parameter
+    const userId = req.params.userId;
 
-    // Count posts by the specific user
     const postCount = await Post.countDocuments({ authorId: userId });
 
     res.status(200).json({ userId, postCount });
@@ -500,122 +495,24 @@ export const getPostCountByUser = async (req, res) => {
 
 
 
-export const toggleSave = async (req, res) => {
-  const userId = req.user._id;
-  const { postId } = req.params;
-
-  try {
-    // Check if the post exists
-    const post = await Post.findById(postId);
-    if (!post) {
-      return res.status(404).json({ error: 'Post not found' });
-    }
-
-    // Check if the save already exists
-    const existingSave = await Save.findOne({ userId, postId });
-
-    if (existingSave) {
-      // If save exists, remove it (unsave)
-      await Save.deleteOne({ _id: existingSave._id });
-      return res.status(200).json({ message: 'Post unsaved' });
-    } else {
-      // If save doesn't exist, create it (save)
-      const newSave = new Save({ userId, postId });
-      await newSave.save();
-      return res.status(201).json({ message: 'Post saved' });
-    }
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
 
 
-
-
-export const getSavedPosts = async (req, res) => {
-  try {
-    const userId = req.user._id;
-
-    if (!userId) {
-      return res.status(401).json({ message: "Unauthorized. Please log in." });
-    }
-
-    // Find saved posts by user ID and populate `postId` with post details
-    const savedPosts = await Save.find({ userId }).populate({
-      path: 'postId',
-      model: 'Post',
-    });
-
-    // Check if any saved posts were found
-    if (savedPosts.length === 0) {
-      return res.status(404).json({ message: 'No saved posts found for this user' });
-    }
-
-    // Transform the saved posts into the desired structure
-    const posts = await Promise.all(savedPosts.map(async (save) => {
-      const post = save.postId;
-
-      // Fetch like and comment counts
-      const likeCount = await Like.countDocuments({ postId: post._id });
-      const commentCount = await Comment.countDocuments({ postId: post._id });
-
-      // Check if the current user liked the post
-      const isLiked = !!(await Like.findOne({ postId: post._id, userId: userId }));
-
-      // Check if the current user is the author of the post
-      const isMe = post.authorId.toString() === userId.toString(); // Compare string IDs
-
-      return {
-        _id: post._id,
-        title: post.title,
-        content: post.content,
-        image: post.image,
-        video: post.video,
-        author: post.author,
-        authorId: post.authorId,
-        authorAvatar: post.authorAvatar,
-        isEdited: post.isEdited,
-        createdAt: post.createdAt,
-        updatedAt: post.updatedAt,
-        __v: post.__v,
-        likeCount,
-        commentCount,
-        isMe,
-        isLiked,
-        isSaved: true // Since this is a saved post
-      };
-    }));
-
-    // Return the posts array directly
-    res.status(200).json(posts);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-
+// Delete a post
 export const deletePost = async (req, res) => {
   try {
       const { postId } = req.params;
       const userId = req.user._id;
-
-      // Find the post by ID
       const post = await Post.findById(postId);
 
-      // Check if the post exists
       if (!post) {
           return res.status(404).json({ message: "Post not found" });
       }
 
-      // Verify if the current user is the author of the post
       if (post.authorId.toString() !== userId.toString()) {
           return res.status(403).json({ message: "Unauthorized to delete this post" });
       }
 
-      // Delete the post
       await Post.findByIdAndDelete(postId);
-
-      // Delete associated comments, likes, and saves
       await Comment.deleteMany({ postId });
       await Like.deleteMany({ postId });
       await Save.deleteMany({ postId });

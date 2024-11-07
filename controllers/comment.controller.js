@@ -4,6 +4,9 @@ import Like from '../models/like.model.js';
 import Comment from '../models/comment.model.js';
 
 
+
+
+// Add a comment to a post
 export const addComment = async (req, res) => {
     try {
         const { postId } = req.params;
@@ -31,16 +34,16 @@ export const addComment = async (req, res) => {
 };
 
 
+
+
+
+// Get comments for a post
 export const getCommentsByPost = async (req, res) => {
     try {
         const { postId } = req.params;
         const userId = req.user ? req.user._id : null;
-
-        // Fetch comments for the given post ID, sorted by creation date
         const comments = await Comment.find({ postId }).sort({ createdAt: -1 });
 
-
-        // Map through comments to add the `isMe` field
         const commentsWithIsMe = comments.map((comment) => {
             const isMe = userId ? comment.userId.toString() === userId.toString() : false;
             return { ...comment._doc, isMe };
@@ -55,12 +58,12 @@ export const getCommentsByPost = async (req, res) => {
 
 
 
+// Edit a comment
 export const editComment = async (req, res) => {
     try {
         const { commentId } = req.params;
         const { content } = req.body;
         const user = req.user;
-
         const comment = await Comment.findById(commentId);
 
         if (!comment) {
@@ -82,6 +85,11 @@ export const editComment = async (req, res) => {
 
 
 
+
+
+
+
+// Delete a comment
 export const deleteComment = async (req, res) => {
     try {
         const { commentId } = req.params;

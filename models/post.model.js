@@ -14,10 +14,10 @@ const postSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 postSchema.virtual('likeCount', {
-    ref: 'Like', // Reference to the Like model
-    localField: '_id', // Find likes where `postId` matches this post's `_id`
-    foreignField: 'postId', // The field in the Like model that references the post
-    count: true, // Get the number of likes
+    ref: 'Like',
+    localField: '_id',
+    foreignField: 'postId',
+    count: true,
     default : 0
 });
 

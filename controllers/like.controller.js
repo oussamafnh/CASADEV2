@@ -1,20 +1,20 @@
 import Like from '../models/like.model.js';
 import Post from '../models/post.model.js';
 
+
+
+
 // Like a post
 export const likePost = async (req, res) => {
     try {
         const userId = req.user._id;
         const { postId } = req.params;
-
-        // Check if the user already liked the post
         const existingLike = await Like.findOne({ userId, postId });
 
         if (existingLike) {
             return res.status(400).json({ message: "You have already liked this post" });
         }
 
-        // Create a new like
         const newLike = new Like({ userId, postId });
         await newLike.save();
 
@@ -24,13 +24,14 @@ export const likePost = async (req, res) => {
     }
 };
 
+
+
+
 // Unlike a post
 export const unlikePost = async (req, res) => {
     try {
         const userId = req.user._id;
         const { postId } = req.params;
-
-        // Find and delete the like
         const like = await Like.findOneAndDelete({ userId, postId });
 
         if (!like) {
@@ -43,12 +44,12 @@ export const unlikePost = async (req, res) => {
     }
 };
 
-// Get the like count for a post
+
+
+// Get the likecount for a post
 export const getPostLikes = async (req, res) => {
     try {
         const { postId } = req.params;
-
-        // Get the post with the like count
         const post = await Post.findById(postId).populate('likeCount');
 
         if (!post) {
