@@ -1,6 +1,7 @@
 import User from "../models/user.model.js";
 import Avatar from '../models/avatar.model.js';
 import Post from "../models/post.model.js";
+import Follow from "../models/follow.model.js";
 import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
 
@@ -70,7 +71,7 @@ export const login = async (req, res) => {
             httpOnly: true,
             secure: true,
             sameSite: 'None',
-            path: '/',
+            path: '/'
         });
         res.status(200).json({
             message: "Login successful",
@@ -227,6 +228,7 @@ export const setupProfile = async (req, res) => {
 
 
 
+
 // Get User by Id function
 export const getUserById = async (req, res) => {
     const { id } = req.params;
@@ -234,8 +236,15 @@ export const getUserById = async (req, res) => {
     try {
         const currentuser = req.user;
         let isAllowed = false;
+        let isFollowed = false;
+        let isFollowing = false;
+
         if (currentuser) {
             isAllowed = true;
+            const followed = await Follow.findOne({ followerId: currentuser._id, followingId: id });
+            isFollowed = !!followed;
+            const following = await Follow.findOne({ followerId: id, followingId: currentuser._id });
+            isFollowing = !!following;
         }
         const user = await User.findById(id);
         if (!user) {
@@ -245,6 +254,8 @@ export const getUserById = async (req, res) => {
         res.status(200).json({
             _id: user._id,
             isAllowed,
+            isFollowed,
+            isFollowing,
             email: user.email,
             avatar: user.avatar,
             firstName: user.firstName,
