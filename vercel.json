@@ -19,10 +19,6 @@
         "src": "/(.*)",
         "dest": "/public/index.html"
       }
-    ],
-    "env": {
-      "JWT_SECRET": "@jwt_secret",
-      "DB_URI": "@db_uri"
-    }
+    ]
   }
   
