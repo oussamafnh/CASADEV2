@@ -8,6 +8,7 @@ import commentRoutes from "./routes/comment.route.js"
 import saveRoutes from "./routes/save.route.js"
 import SearchRoutes from "./routes/search.route.js"
 import followRoutes from "./routes/follow.route.js"
+import reportRoutes from './routes/report.route.js';
 import cors from 'cors';
 
 const app = express();
@@ -27,6 +28,7 @@ app.use("/api/search", SearchRoutes)
 app.use("/api/comment", commentRoutes)
 app.use("/api/save", saveRoutes)
 app.use("/api/follow", followRoutes)
+app.use('/api/reports', reportRoutes);
 
 
 app.listen(PORT, () => {
