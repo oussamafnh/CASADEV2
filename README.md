@@ -2,6 +2,14 @@
 
 CASADEV is a social media platform backend built with **Node.js**, **Express**, and **MongoDB**. It provides a robust API for user management, posts, comments, likes, follows, search functionality, and more.
 
+## Live Demos
+
+- **Live API for Testing in Postman:** [https://casadev2-4aiv.onrender.com](https://casadev2-4aiv.onrender.com)  
+  Use this link to test the API endpoints directly via Postman or any HTTP client.  
+- **Live Application Demo:** [CASADEV Frontend Application](https://casadev.vercel.app)  
+  Explore the full functionality of CASADEV. The frontend repository for this demo is available [here](https://github.com/oussamafnh/CASADEV).
+
+
 ## Features
 
 - **User Authentication:** Sign up, log in, log out, and JWT-based token management.
@@ -11,7 +19,7 @@ CASADEV is a social media platform backend built with **Node.js**, **Express**, 
 - **Follow System:** Follow and unfollow users with follower/following lists.
 - **Search:** Search for posts and users dynamically.
 - **Reports:** Create and manage reports for inappropriate content.
-
+- **More Upcoming Features**
 ---
 
 ## Environment Variables
@@ -138,4 +146,3 @@ This project is ready for deployment on platforms like **Render**, **Heroku**, o
 ## License
 
 This project is licensed under the MIT License.
-```
