@@ -6,7 +6,10 @@ const userSchema = new mongoose.Schema({
     password: { type: String, required: true },
     firstName: { type: String },
     lastName: { type: String },
-    avatar: { type: String },
+    avatar: { 
+        type: String, 
+        default: 'https://res.cloudinary.com/dq7kjds8s/image/upload/v1731950268/x31lamftbwev3nyogmqy.jpg' 
+    },
     coverPicture: { type: String },
     bio: { type: String },
     birthday: { type: Date },
