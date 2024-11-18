@@ -12,13 +12,13 @@ CASADEV is a social media platform backend built with **Node.js**, **Express**, 
 
 ## Features
 
-- **User Authentication:** Sign up, log in, log out, and JWT-based token management.
-- **Profile Management:** Avatar, bio, and profile setup.
-- **Post Management:** Create, edit, like, save, and fetch posts.
-- **Comments:** Add, edit, and delete comments on posts.
-- **Follow System:** Follow and unfollow users with follower/following lists.
-- **Search:** Search for posts and users dynamically.
-- **Reports:** Create and manage reports for inappropriate content.
+- **User Authentication:**  Sign up, log in, log out, and JWT-based token management.
+- **Profile Management:**   Avatar, bio, and profile setup.
+- **Post Management:**      Create, edit, like, save, and fetch posts.
+- **Comments:**             Add, edit, and delete comments on posts.
+- **Follow System:**        Follow and unfollow users with follower/following lists.
+- **Search:**               Search for posts and users dynamically.
+- **Reports:**              Create and manage reports for inappropriate content.
 - **More Upcoming Features**
 ---
 
