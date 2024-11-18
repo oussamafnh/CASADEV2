@@ -202,7 +202,9 @@ export const setupProfile = async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
-        user.avatar = avatar;
+        // Set default avatar if the provided avatar is empty
+        user.avatar = avatar || 'https://res.cloudinary.com/dq7kjds8s/image/upload/v1731950268/x31lamftbwev3nyogmqy.jpg';
+
         user.firstName = firstName;
         user.lastName = lastName;
         user.username = username;
