@@ -10,6 +10,7 @@ CASADEV is a social media platform backend built with **Node.js**, **Express**, 
   Explore the full functionality of CASADEV. The frontend repository for this demo is available [here](https://github.com/oussamafnh/CASADEV).
 
 
+
 ## Features
 
 - **User Authentication:**  Sign up, log in, log out, and JWT-based token management.
